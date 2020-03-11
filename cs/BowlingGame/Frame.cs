@@ -7,5 +7,6 @@
         public int SecondThrow { get; set; }
         public int Bonus { get; set; }
         public bool IsFirstThrow { get; set; } = true;
+        public bool IsThirdThrow { get; set; } = false;
     }
 }

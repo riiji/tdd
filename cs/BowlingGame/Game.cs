@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using BowlingGame.Infrastructure;
 using FluentAssertions;
 using NUnit.Framework;
@@ -25,48 +26,94 @@ namespace BowlingGame
 
             bool isFrameEnded = false;
 
-            if (currentFrame.IsFirstThrow)
+            if (currentFrameNumber == 9)
             {
-                currentFrame.FirstThrow = pins;
-
-                if (currentFrameNumber > 0 && (frames[currentFrameNumber - 1].State == FrameState.Spare ||
-                                               frames[currentFrameNumber - 1].State == FrameState.Strike))
+                if (currentFrame.IsFirstThrow)
                 {
-                    if (frames[currentFrameNumber - 1].State == FrameState.Strike)
-                        if (currentFrameNumber > 1 && frames[currentFrameNumber - 2].State == FrameState.Strike)
-                        {
-                            frames[currentFrameNumber - 2].Bonus += pins;
-                        }
-                    frames[currentFrameNumber - 1].Bonus += pins;
-                }
+                    currentFrame.IsFirstThrow = false;
+                    currentFrame.FirstThrow = pins;
 
-                currentFrame.IsFirstThrow = false;
+                    if (pins == 10)
+                    {
+                        currentFrame.State = FrameState.Strike;
+                    }
+     
+                    if (currentFrameNumber > 0 && (frames[currentFrameNumber - 1].State == FrameState.Spare ||
+                                                   frames[currentFrameNumber - 1].State == FrameState.Strike))
+                    {
+                        if (frames[currentFrameNumber - 1].State == FrameState.Strike)
+                            if (currentFrameNumber > 1 && frames[currentFrameNumber - 2].State == FrameState.Strike)
+                            {
+                                frames[currentFrameNumber - 2].Bonus += pins;
+                            }
+                        frames[currentFrameNumber - 1].Bonus += pins;
+                    }
+                }
+                else
+                {
+                    currentFrame.SecondThrow = pins;
+
+                    if (currentFrame.IsThirdThrow)
+                    {
+                        currentFrame.Bonus += pins;
+                        isFrameEnded = true;
+                        currentFrameNumber++;
+                    }
+                    else if (pins + currentFrame.FirstThrow == 10 || currentFrame.State == FrameState.Strike)
+                    {
+                        currentFrame.IsThirdThrow = true;
+                    }
+                    else
+                    {
+                        currentFrameNumber++;
+                    }
+                }
             }
             else
             {
-                if (pins + currentFrame.FirstThrow > 10)
-                    throw new ArgumentException();
-
-                currentFrame.SecondThrow = pins;
-
-                if (currentFrameNumber > 0 && frames[currentFrameNumber - 1].State == FrameState.Strike)
+                if (currentFrame.IsFirstThrow)
                 {
-                    frames[currentFrameNumber - 1].Bonus += pins;
+                    currentFrame.FirstThrow = pins;
+
+                    if (currentFrameNumber > 0 && (frames[currentFrameNumber - 1].State == FrameState.Spare ||
+                                                   frames[currentFrameNumber - 1].State == FrameState.Strike))
+                    {
+                        if (frames[currentFrameNumber - 1].State == FrameState.Strike)
+                            if (currentFrameNumber > 1 && frames[currentFrameNumber - 2].State == FrameState.Strike)
+                            {
+                                frames[currentFrameNumber - 2].Bonus += pins;
+                            }
+                        frames[currentFrameNumber - 1].Bonus += pins;
+                    }
+
+                    currentFrame.IsFirstThrow = false;
+                }
+                else
+                {
+                    if (pins + currentFrame.FirstThrow > 10)
+                        throw new ArgumentException();
+
+                    currentFrame.SecondThrow = pins;
+
+                    if (currentFrameNumber > 0 && frames[currentFrameNumber - 1].State == FrameState.Strike)
+                    {
+                        frames[currentFrameNumber - 1].Bonus += pins;
+                    }
+
+                    isFrameEnded = true;
                 }
 
-                isFrameEnded = true;
-            }
+                if (currentFrame.FirstThrow == 10)
+                {
+                    currentFrame.State = FrameState.Strike;
+                    isFrameEnded = true;
+                }
+                else if (currentFrame.FirstThrow + currentFrame.SecondThrow == 10)
+                    currentFrame.State = FrameState.Spare;
 
-            if (currentFrame.FirstThrow == 10)
-            {
-                currentFrame.State = FrameState.Strike;
-                isFrameEnded = true;
+                if (isFrameEnded)
+                    currentFrameNumber++;
             }
-            else if (currentFrame.FirstThrow + currentFrame.SecondThrow == 10)
-                currentFrame.State = FrameState.Spare;
-
-            if (isFrameEnded)
-                currentFrameNumber++;
         }
 
         public int GetScore()
@@ -176,7 +223,7 @@ namespace BowlingGame
                 game.Roll(5);
                 game.Roll(8);
             };
-           action.ShouldThrow<ArgumentException>();
+            action.ShouldThrow<ArgumentException>();
         }
 
         [Test]
