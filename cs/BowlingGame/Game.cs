@@ -18,7 +18,7 @@ namespace BowlingGame
             if (pins < 0 || pins > 10)
                 throw new ArgumentException();
 
-            if
+            if 
 
             _score += pins;
         }
@@ -79,7 +79,7 @@ namespace BowlingGame
         }
 
         [Test]
-        public void GetScore_AddsBonusScpre_WhenSpare()
+        public void GetScore_AddsBonusScore_WhenSpare()
         {
             game.Roll(2);
             game.Roll(8);
