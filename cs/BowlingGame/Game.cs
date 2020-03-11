@@ -37,54 +37,37 @@ namespace BowlingGame
                     {
                         currentFrame.State = FrameState.Strike;
                     }
-     
-                    if (currentFrameNumber > 0 && (frames[currentFrameNumber - 1].State == FrameState.Spare ||
-                                                   frames[currentFrameNumber - 1].State == FrameState.Strike))
-                    {
-                        if (frames[currentFrameNumber - 1].State == FrameState.Strike)
-                            if (currentFrameNumber > 1 && frames[currentFrameNumber - 2].State == FrameState.Strike)
-                            {
-                                frames[currentFrameNumber - 2].Bonus += pins;
-                            }
-                        frames[currentFrameNumber - 1].Bonus += pins;
-                    }
+
+                    AddBonus(currentFrameNumber - 1, pins, true);
                 }
                 else
                 {
-                    currentFrame.SecondThrow = pins;
 
                     if (currentFrame.IsThirdThrow)
                     {
                         currentFrame.Bonus += pins;
-                        isFrameEnded = true;
                         currentFrameNumber++;
-                    }
-                    else if (pins + currentFrame.FirstThrow == 10 || currentFrame.State == FrameState.Strike)
-                    {
-                        currentFrame.IsThirdThrow = true;
                     }
                     else
                     {
-                        currentFrameNumber++;
+                        currentFrame.SecondThrow = pins;
+                        AddBonus(currentFrameNumber - 1, pins, false);
+
+                        if (pins + currentFrame.FirstThrow == 10 || currentFrame.State == FrameState.Strike)
+                            currentFrame.IsThirdThrow = true;
+                        else
+                            currentFrameNumber++;
                     }
                 }
             }
             else
             {
+                if (currentFrameNumber > 0)
+                    AddBonus(currentFrameNumber - 1, pins, currentFrame.IsFirstThrow);
+
                 if (currentFrame.IsFirstThrow)
                 {
                     currentFrame.FirstThrow = pins;
-
-                    if (currentFrameNumber > 0 && (frames[currentFrameNumber - 1].State == FrameState.Spare ||
-                                                   frames[currentFrameNumber - 1].State == FrameState.Strike))
-                    {
-                        if (frames[currentFrameNumber - 1].State == FrameState.Strike)
-                            if (currentFrameNumber > 1 && frames[currentFrameNumber - 2].State == FrameState.Strike)
-                            {
-                                frames[currentFrameNumber - 2].Bonus += pins;
-                            }
-                        frames[currentFrameNumber - 1].Bonus += pins;
-                    }
 
                     currentFrame.IsFirstThrow = false;
                 }
@@ -94,11 +77,6 @@ namespace BowlingGame
                         throw new ArgumentException();
 
                     currentFrame.SecondThrow = pins;
-
-                    if (currentFrameNumber > 0 && frames[currentFrameNumber - 1].State == FrameState.Strike)
-                    {
-                        frames[currentFrameNumber - 1].Bonus += pins;
-                    }
 
                     isFrameEnded = true;
                 }
@@ -113,6 +91,19 @@ namespace BowlingGame
 
                 if (isFrameEnded)
                     currentFrameNumber++;
+            }
+        }
+
+        private void AddBonus(int frameNumber, int bonus, bool firstThrow)
+        {
+            Frame frame = frames[frameNumber];
+
+            if (firstThrow && frame.State == FrameState.Spare || frame.State == FrameState.Strike)
+            {
+                frame.Bonus += bonus;
+                if (firstThrow && frame.State == FrameState.Strike)
+                    if (frameNumber > 0)
+                        AddBonus(frameNumber - 1, bonus, false);
             }
         }
 
@@ -267,6 +258,34 @@ namespace BowlingGame
                 game.Roll(10);
             }
             game.GetScore().Should().Be(300);
+        }
+
+
+        [Test]
+        public void GetScore_ReturnsCorrectScore_WhenLastFrameNoStrikeOrSpare()
+        {
+            for (int i = 0; i < 9; i++)
+            {
+                game.Roll(10);
+            }
+            game.Roll(4);
+            game.Roll(3);
+            game.GetScore().Should().Be(258);
+        }
+
+        [Test]
+        public void Roll_ThrowsException_WhenMoreThan10PinsHitInLastFrame()
+        {
+            Action action = () =>
+            {
+                for (int i = 0; i < 9; i++)
+                {
+                    game.Roll(10);
+                }
+                game.Roll(4);
+                game.Roll(8);
+            };
+            action.ShouldThrow<ArgumentException>();
         }
     }
 }
