@@ -7,13 +7,16 @@ namespace BowlingGame
 {
     public class Game
     {
+        private int _score = 0;
+
         public void Roll(int pins)
         {
+            _score += pins;
         }
 
         public int GetScore()
         {
-            throw new NotImplementedException();
+            return _score;
         }
     }
 
@@ -27,5 +30,16 @@ namespace BowlingGame
                 .GetScore()
                 .Should().Be(0);
         }
+
+        [Test]
+        public void HaveCorrectScore_AfterAnyRoll()
+        {
+            var game = new Game();
+            game.Roll(4);
+            game.GetScore().Should().Be(4);
+        }
+
+
+
     }
 }
