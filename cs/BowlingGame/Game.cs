@@ -7,25 +7,72 @@ namespace BowlingGame
 {
     public class Game
     {
-        private int _score = 0;
+        private readonly Frame[] frames = new Frame[10];
+        private int currentFrameNumber = 0;
 
-        private int defaultPintsNumber = 10;
-        private int pintsLeft;
-        private bool firstStrike = true;
+        public Game()
+        {
+            for (int i = 0; i < frames.Length; ++i)
+                frames[i] = new Frame();
+        }
 
         public void Roll(int pins)
         {
             if (pins < 0 || pins > 10)
                 throw new ArgumentException();
 
-            if 
+            Frame currentFrame = frames[currentFrameNumber];
 
-            _score += pins;
+            bool isFrameEnded = false;
+
+            if (currentFrame.IsFirstThrow)
+            {
+                currentFrame.FirstThrow = pins;
+
+                if (currentFrameNumber > 0 && (frames[currentFrameNumber - 1].State == FrameState.Strike ||
+                                               frames[currentFrameNumber - 1].State == FrameState.Spare))
+                {
+                    frames[currentFrameNumber - 1].Bonus += pins;
+                }
+
+                currentFrame.IsFirstThrow = false;
+            }
+            else
+            {
+                currentFrame.SecondThrow = pins;
+
+                if (currentFrameNumber > 0 && frames[currentFrameNumber - 1].State == FrameState.Strike)
+                {
+                    frames[currentFrameNumber - 1].Bonus += pins;
+                }
+
+                isFrameEnded = true;
+            }
+
+            if (currentFrame.FirstThrow == 10)
+            {
+                currentFrame.State = FrameState.Strike;
+                isFrameEnded = true;
+            }
+            else if (currentFrame.FirstThrow + currentFrame.SecondThrow == 10)
+                currentFrame.State = FrameState.Spare;
+
+            if (isFrameEnded)
+                currentFrameNumber++;
         }
 
         public int GetScore()
         {
-            return _score;
+            int score = 0;
+
+            foreach (var frame in frames)
+            {
+                score += frame.FirstThrow;
+                score += frame.SecondThrow;
+                score += frame.Bonus;
+            }
+
+            return score;
         }
     }
 
